@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 from conf import TG_API_TOKEN
 
-GENDER, PHOTO, LOCATION, BIO = range(4)
+NAME, ANSWER_LATER, GENDER, PHOTO, LOCATION, BIO = range(6)
 
 
 def start(update, context):
@@ -36,6 +36,23 @@ def start(update, context):
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
 
     return GENDER
+
+
+def set_name(update, context):
+    update.message.reply_text(
+        'Как тебя зовут?'
+    )
+
+    return ANSWER_LATER
+
+
+def answer_later(update, context):
+    name = update.message.text
+    update.message.reply_text(
+        f'Отвечу тебе позже {name}'
+    )
+
+    return ConversationHandler.END
 
 
 def gender(update, context):
@@ -121,18 +138,19 @@ def main():
 
     # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler('start', set_name)],
 
         states={
-            GENDER: [MessageHandler(Filters.regex('^(Boy|Girl|Other)$'), gender)],
-
-            PHOTO: [MessageHandler(Filters.photo, photo),
-                    CommandHandler('skip', skip_photo)],
-
-            LOCATION: [MessageHandler(Filters.location, location),
-                       CommandHandler('skip', skip_location)],
-
-            BIO: [MessageHandler(Filters.text, bio)]
+            ANSWER_LATER:  [MessageHandler(Filters.regex('^.+$'), answer_later)],
+            # GENDER: [MessageHandler(Filters.regex('^(Boy|Girl|Other)$'), gender)],
+            #
+            # PHOTO: [MessageHandler(Filters.photo, photo),
+            #         CommandHandler('skip', skip_photo)],
+            #
+            # LOCATION: [MessageHandler(Filters.location, location),
+            #            CommandHandler('skip', skip_location)],
+            #
+            # BIO: [MessageHandler(Filters.text, bio)]
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
